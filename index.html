@@ -1,388 +1,561 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Valentine</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Valentine?</title>
 
-  <style>
-    :root{
-      --pink:#ff2d7a;
-      --pink2:#ff4f93;
-      --white:#ffffff;
-      --shadow: rgba(0,0,0,0.25);
-    }
+<style>
+:root { --bg1:#ffdde1; --bg2:#ee9ca7; }
+* { box-sizing: border-box; }
 
-    html,body{
-      height:100%;
-      margin:0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      overflow:hidden;
-    }
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  display:grid;
+  place-items:center;
+  background:radial-gradient(circle at top,var(--bg1),var(--bg2));
+  overflow:hidden;
+}
 
-    /* Background image */
-    .bg{
-      position:fixed;
-      inset:0;
-      background: url("./song_image.jpg") center/cover no-repeat;
-    }
-    .bg::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      background: rgba(0,0,0,0.25);
-    }
+/* background floating hearts */
+.bg-hearts{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  opacity:.45;
+  z-index:0;
+}
+.bg-heart{
+  position:absolute;
+  font-size:28px;
+  animation: bgFloat linear forwards;
+  filter: drop-shadow(0 6px 10px rgba(0,0,0,.08));
+}
+@keyframes bgFloat{
+  from{ transform: translateY(12vh) scale(.9); opacity:0; }
+  12%{ opacity:1; }
+  to{ transform: translateY(-135vh) scale(1.3); opacity:0; }
+}
 
-    /* Floating hearts background */
-    #bgHearts{
-      position:fixed;
-      inset:0;
-      pointer-events:none;
-      z-index:1;
-      overflow:hidden;
-    }
-    .heart{
-      position:absolute;
-      bottom:-40px;
-      color: rgba(255,255,255,0.9);
-      text-shadow: 0 4px 16px rgba(0,0,0,0.35);
-      animation: floatUp linear forwards;
-      user-select:none;
-      will-change: transform, opacity;
-    }
-    @keyframes floatUp{
-      0%{ transform: translateY(0) scale(1); opacity:0; }
-      10%{ opacity: 0.9; }
-      100%{ transform: translateY(-120vh) scale(1.15); opacity:0; }
-    }
+/* White card */
+.card{
+  width:min(760px,92vw);
+  min-height:460px;
+  background:rgba(255,255,255,.86);
+  border-radius:24px;
+  padding:28px;
+  box-shadow:0 20px 60px rgba(0,0,0,.18);
+  position:relative;
+  z-index:2;
+}
 
-    /* Center card */
-    .wrap{
-      position:relative;
-      z-index:5;
-      height:100%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:24px;
-    }
+h1{ margin:0 0 10px; font-size:clamp(26px,3vw,40px); text-align:center; }
+p{ margin:0 0 10px; text-align:center; opacity:.82; }
 
-    .card{
-      width:min(520px, 92vw);
-      background: rgba(255,255,255,0.14);
-      border: 1px solid rgba(255,255,255,0.25);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border-radius: 24px;
-      box-shadow: 0 18px 60px var(--shadow);
-      padding: 26px 22px;
-      text-align:center;
-      color: #fff;
-    }
+.hint{
+  text-align:center;
+  font-size:12px;
+  opacity:.7;
+  margin-bottom:18px;
+  transition: opacity .6s ease, transform .6s ease;
+}
+.hint.hide{
+  opacity:0;
+  transform: translateY(-6px);
+  pointer-events:none;
+}
 
-    h1{
-      margin: 0 0 14px;
-      font-size: 34px;
-      font-weight: 800;
-      letter-spacing: 0.2px;
-      text-shadow: 0 10px 30px rgba(0,0,0,0.35);
-    }
+/* Arena with your photo background */
+.arena{
+  position:relative;
+  height:280px;
+  border-radius:18px;
+  background-image:url("4D4548FA-A982-475D-81D8-B881CF0DA107_1_201_a.jpeg");
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  background-color:rgba(0,0,0,0.25);
+  background-blend-mode:overlay;
+  overflow:hidden;
+}
 
-    p{
-      margin: 0 0 18px;
-      font-size: 18px;
-      line-height: 1.3;
-      text-shadow: 0 10px 30px rgba(0,0,0,0.35);
-    }
+/* Fireworks canvas */
+#fx{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:none;
+  pointer-events:none;
+}
 
-    .btnRow{
-      display:flex;
-      gap: 12px;
-      justify-content:center;
-      flex-wrap:wrap;
-      margin-top: 12px;
-    }
+/* Base button styling */
+.btn{
+  border:0;
+  font-weight:800;
+  cursor:pointer;
+  user-select:none;
+  position:absolute;
+  box-shadow:0 10px 25px rgba(0,0,0,.16);
+}
 
-    .btn{
-      border:none;
-      border-radius: 16px;
-      padding: 14px 18px;
-      font-size: 18px;
-      font-weight: 800;
-      cursor:pointer;
-      transition: transform .08s ease, filter .2s ease, box-shadow .2s ease;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.22);
-      user-select:none;
-      min-width: 138px;
-    }
-    .btn:active{ transform: scale(0.98); }
+/* ✅ SIMPLE UNICOLOR HEART YES button */
+#yesBtn{
+  left:50%;
+  top:58%;
+  width:108px;
+  height:108px;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  background:#ff3b6a;
+  color:#fff;
+  font-size:18px;
+  letter-spacing:.4px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:16px;
+  animation: pulse 1.2s infinite;
 
-    .btnYes{
-      background: linear-gradient(180deg, var(--pink2), var(--pink));
-      color:#fff;
-    }
-    .btnNo{
-      background: rgba(255,255,255,0.22);
-      color:#fff;
-      border: 1px solid rgba(255,255,255,0.22);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
+  /* prevents weird seam clipping on some browsers */
+  isolation: isolate;
+}
 
-    /* Solid heart button */
-    .heartBtn{
-      position: relative;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      width: 170px;
-      height: 120px;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      margin: 8px auto 0;
-      user-select:none;
-    }
-    .heartShape{
-      position:absolute;
-      width: 150px;
-      height: 130px;
-      background: var(--pink);
-      transform: rotate(-45deg);
-      border-radius: 18px;
-      box-shadow: 0 18px 44px rgba(0,0,0,0.25);
-    }
-    .heartShape::before,
-    .heartShape::after{
-      content:"";
-      position:absolute;
-      width: 150px;
-      height: 130px;
-      background: var(--pink);
-      border-radius: 999px;
-    }
-    .heartShape::before{
-      top: -70px;
-      left: 0;
-    }
-    .heartShape::after{
-      top: 0;
-      left: 70px;
-    }
-    .heartText{
-      position:relative;
-      z-index:2;
-      font-size: 28px;
-      font-weight: 900;
-      color: #fff;
-      letter-spacing: 1px;
-      text-shadow: 0 10px 26px rgba(0,0,0,0.35);
-      transform: translateY(2px);
-    }
+#yesBtn span{
+  transform: rotate(45deg);
+  position: relative;
+  z-index: 5; /* keep text above shapes */
+  text-shadow: 0 2px 10px rgba(0,0,0,.28);
+  -webkit-font-smoothing: antialiased;
+}
 
-    /* Music button */
-    .music-btn{
-      position: fixed;
-      left: 18px;
-      bottom: 18px;
-      width: 56px;
-      height: 56px;
-      border: none;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.18);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-      cursor: pointer;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      z-index: 50;
-    }
-    .music-btn:hover{ transform: translateY(-1px); }
-    .music-btn:active{ transform: translateY(0px) scale(0.98); }
+/* heart lobes (same flat color) */
+#yesBtn::before,
+#yesBtn::after{
+  content:"";
+  position:absolute;
+  width:108px;
+  height:108px;
+  background:#ff3b6a;
+  border-radius:50%;
+  z-index: 1;
+}
+#yesBtn::before{ top:-54px; left:0; }
+#yesBtn::after{ left:54px; top:0; }
 
-    .music-icon{
-      font-size: 22px;
-      line-height: 1;
-      color: #ffffff;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.35);
-    }
-    .music-icon.pause{ display:none; }
-    .music-btn.playing .music-icon.play{ display:none; }
-    .music-btn.playing .music-icon.pause{ display:inline; }
+@keyframes pulse{
+  0%   { transform: translate(-50%,-50%) rotate(-45deg) scale(1); }
+  50%  { transform: translate(-50%,-50%) rotate(-45deg) scale(1.08); }
+  100% { transform: translate(-50%,-50%) rotate(-45deg) scale(1); }
+}
 
-    /* Fade transitions */
-    .fade-out{ opacity:0; transform: translateY(6px); transition: opacity .35s ease, transform .35s ease; }
-    .fade-in{ opacity:1; transform: translateY(0px); transition: opacity .45s ease, transform .45s ease; }
-    #question{ opacity:1; transform: translateY(0px); transition: opacity .35s ease, transform .35s ease; }
-    #response{ display:none; opacity:0; transform: translateY(6px); }
+/* click pop */
+#yesBtn.clicked{
+  animation: pop .55s ease-out 1;
+}
+@keyframes pop{
+  0%   { transform: translate(-50%,-50%) rotate(-45deg) scale(1); }
+  35%  { transform: translate(-50%,-50%) rotate(-45deg) scale(1.22); }
+  70%  { transform: translate(-50%,-50%) rotate(-45deg) scale(.98); }
+  100% { transform: translate(-50%,-50%) rotate(-45deg) scale(1.08); }
+}
 
-    /* GIF smooth fade-in */
-    #gifWrap{
-      margin-top: 18px;
-      display:none;
-      opacity:0;
-      transform: translateY(6px);
-      transition: opacity .5s ease, transform .5s ease;
-    }
-    #gifWrap.show{
-      display:block;
-      opacity:1;
-      transform: translateY(0px);
-    }
-    #gifWrap img{
-      width:min(360px, 86vw);
-      border-radius: 18px;
-      box-shadow: 0 18px 60px rgba(0,0,0,0.35);
-      border: 1px solid rgba(255,255,255,0.16);
-    }
-  </style>
+/* NO button */
+#noBtn{
+  background: rgba(0,0,0,.78);
+  color: #fff;
+  font-size: 14px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 2px solid rgba(255,255,255,.85);
+  box-shadow: 0 10px 25px rgba(0,0,0,.35);
+}
+
+/* Result */
+.result{
+  display:none;
+  text-align:center;
+  padding-top:10px;
+  opacity:0;
+  transform: translateY(10px);
+  transition: opacity .55s ease, transform .55s ease;
+}
+.result.show{ opacity:1; transform: translateY(0); }
+.result img{
+  width:min(420px,80vw);
+  border-radius:16px;
+  box-shadow:0 14px 35px rgba(0,0,0,.18);
+  opacity:0;
+  transform: translateY(8px);
+  transition: opacity .8s ease, transform .8s ease;
+}
+.result.show img{ opacity:1; transform: translateY(0); }
+
+.footer{ margin-top:14px; text-align:center; font-size:12px; opacity:.65; }
+
+/* Replay button */
+#replayBtn{
+  margin-top:14px;
+  border:0;
+  padding:10px 14px;
+  border-radius:12px;
+  font-weight:800;
+  cursor:pointer;
+  background: rgba(0,0,0,.85);
+  color: white;
+  box-shadow: 0 12px 25px rgba(0,0,0,.18);
+}
+#replayBtn:hover{ filter: brightness(1.06); }
+
+/* Hearts confetti */
+.hearts{ position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:3; }
+.heart{ position:absolute; font-size:18px; opacity:.9; animation: floatUp linear forwards; }
+@keyframes floatUp{
+  from{ transform: translateY(0) scale(1); opacity:.9; }
+  to  { transform: translateY(-120vh) scale(1.25); opacity:0; }
+}
+
+/* 🎵 Play Music Button */
+#playMusicBtn{
+  position:fixed;
+  top:18px;
+  right:18px;
+  width:132px;
+  height:132px;
+  border-radius:50%;
+  background-image:url("song image.jpg");
+  background-size:cover;
+  background-position:center;
+  border:5px solid rgba(255,255,255,.9);
+  cursor:pointer;
+  box-shadow:0 16px 42px rgba(0,0,0,.30);
+  transition: transform .15s ease, filter .15s ease;
+  z-index: 50;
+  overflow:hidden;
+}
+#playMusicBtn::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: radial-gradient(circle at center, rgba(0,0,0,.25), rgba(0,0,0,.05));
+}
+#playMusicBtn::after{
+  content:"▶";
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform: translate(-50%, -50%);
+  width:52px;
+  height:52px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background: rgba(0,0,0,.55);
+  color: white;
+  font-size: 20px;
+  backdrop-filter: blur(2px);
+}
+#playMusicBtn.playing::after{ content:"❚❚"; }
+#playMusicBtn:hover{
+  transform: scale(1.05);
+  filter: brightness(1.05);
+}
+
+/* pulse while playing */
+#playMusicBtn.playing{ animation: beat 0.62s infinite; }
+@keyframes beat{
+  0%{
+    box-shadow:
+      0 16px 42px rgba(0,0,0,.30),
+      0 0 0 0 rgba(255,255,255,.28),
+      0 0 0 0 rgba(255,59,106,.40);
+  }
+  55%{
+    box-shadow:
+      0 16px 42px rgba(0,0,0,.30),
+      0 0 0 16px rgba(255,255,255,.18),
+      0 0 34px rgba(255,59,106,.62);
+  }
+  100%{
+    box-shadow:
+      0 16px 42px rgba(0,0,0,.30),
+      0 0 0 0 rgba(255,255,255,0),
+      0 0 0 rgba(255,59,106,0);
+  }
+}
+</style>
 </head>
 
 <body>
-  <div class="bg"></div>
-  <div id="bgHearts"></div>
+  <div class="bg-hearts" id="bgHearts"></div>
+  <button id="playMusicBtn" title="Play / Pause song"></button>
 
-  <!-- audio (must be triggered by user interaction to play on mobile) -->
-  <audio id="music" preload="auto">
-    <source src="./song.mp3" type="audio/mpeg" />
-  </audio>
+  <div class="card">
+    <div id="question">
+      <h1>Tonka, will you be my Valentine? 💘</h1>
+      <p>You can say “No”… if you can catch it 😈</p>
+      <div id="musicHint" class="hint">Tip: tap the music button for the full vibe 🎶</div>
 
-  <!-- music control -->
-  <button id="playMusicBtn" class="music-btn" type="button" aria-label="Play or pause music" title="Play / Pause song">
-    <span class="music-icon play">▶</span>
-    <span class="music-icon pause">⏸</span>
-  </button>
-
-  <div class="wrap">
-    <div class="card">
-      <div id="question">
-        <h1>Hey Tonka ❤️</h1>
-        <p>Will you be my Valentine?</p>
-
-        <!-- Solid heart YES (also starts music) -->
-        <button id="yesBtn" class="heartBtn" type="button" aria-label="Yes">
-          <div class="heartShape"></div>
-          <div class="heartText">YES</div>
-        </button>
-
-        <div class="btnRow">
-          <button id="noBtn" class="btn btnNo" type="button">No</button>
-        </div>
+      <div id="arena" class="arena">
+        <canvas id="fx"></canvas>
+        <button id="yesBtn" class="btn"><span>YES 💖</span></button>
+        <button id="noBtn" class="btn" aria-label="No">no</button>
       </div>
 
-      <div id="response">
-        <h1>Yaaaay! 💖</h1>
-        <p>Now you’re stuck with me 😄</p>
-
-        <div id="gifWrap">
-          <img src="./giphy.gif" alt="Celebration gif" />
-        </div>
-      </div>
+      <div class="footer">(Tip: try really hard to click “no” 😅)</div>
     </div>
+
+    <div id="result" class="result">
+      <h2>CONGRATULATIONS 🎉💘</h2>
+      <p>You are officially each other’s Valentine 😎</p>
+      <img id="meme" alt="funny meme" src="giphy.gif">
+      <div><button id="replayBtn">Replay 🔁</button></div>
+    </div>
+
+    <div class="hearts" id="hearts"></div>
+    <audio id="music" src="song.mp3" preload="auto" loop></audio>
   </div>
 
-  <script>
-  (() => {
-    const music = document.getElementById('music');
-    const playBtn = document.getElementById('playMusicBtn');
-    const yesBtn = document.getElementById('yesBtn');
-    const noBtn = document.getElementById('noBtn');
-    const question = document.getElementById('question');
-    const response = document.getElementById('response');
-    const gifWrap = document.getElementById('gifWrap');
-    const bgHearts = document.getElementById('bgHearts');
+<script>
+const arena = document.getElementById("arena");
+const noBtn = document.getElementById("noBtn");
+const yesBtn = document.getElementById("yesBtn");
+const question = document.getElementById("question");
+const result = document.getElementById("result");
+const hearts = document.getElementById("hearts");
+const music = document.getElementById("music");
+const playMusicBtn = document.getElementById("playMusicBtn");
+const replayBtn = document.getElementById("replayBtn");
+const musicHint = document.getElementById("musicHint");
 
-    // Safety: if any element is missing, don’t crash (important for GitHub Pages debugging)
-    if (!music || !playBtn || !yesBtn || !noBtn || !question || !response || !gifWrap || !bgHearts) return;
+setTimeout(() => musicHint.classList.add("hide"), 3500);
 
-    const setPlayingUI = (isPlaying) => {
-      playBtn.classList.toggle('playing', isPlaying);
-    };
+/* Music behavior */
+music.volume = 0.10;
 
-    music.addEventListener('play', () => setPlayingUI(true));
-    music.addEventListener('pause', () => setPlayingUI(false));
+function setPlayingUI(isPlaying){
+  if(isPlaying) playMusicBtn.classList.add("playing");
+  else playMusicBtn.classList.remove("playing");
+}
 
-    const ensurePlaying = async () => {
-      // If already playing, do nothing (prevents YES from restarting / pausing)
-      if (!music.paused) return;
-      try {
-        await music.play();
-      } catch (e) {
-        // Autoplay restrictions: user can press again
-        setPlayingUI(false);
-      }
-    };
+async function ensureMusicPlaying(){
+  if(!music.paused){
+    setPlayingUI(true);
+    return;
+  }
+  try{ await music.play(); setPlayingUI(true); } catch(e){}
+}
 
-    playBtn.addEventListener('click', async () => {
-      if (music.paused) await ensurePlaying();
-      else music.pause();
+function toggleMusic(){
+  if(music.paused) ensureMusicPlaying();
+  else { music.pause(); setPlayingUI(false); }
+}
+music.addEventListener("play", () => setPlayingUI(true));
+music.addEventListener("pause", () => setPlayingUI(false));
+playMusicBtn.addEventListener("click", toggleMusic);
+
+/* Background hearts */
+const bgHearts = document.getElementById("bgHearts");
+function spawnBgHeart(){
+  const h = document.createElement("div");
+  h.className = "bg-heart";
+  h.textContent = Math.random() < 0.5 ? "💗" : "💖";
+  h.style.left = (Math.random()*100) + "%";
+  h.style.bottom = "-30px";
+  const dur = 9 + Math.random()*10;
+  h.style.animationDuration = dur + "s";
+  h.style.fontSize = (22 + Math.random()*20) + "px";
+  bgHearts.appendChild(h);
+  setTimeout(()=>h.remove(), dur*1000);
+}
+setInterval(spawnBgHeart, 650);
+for(let i=0;i<10;i++) setTimeout(spawnBgHeart, i*170);
+
+/* NO button */
+const SAFE_DISTANCE = 125;
+const PADDING = 12;
+
+function placeNoRandom() {
+  const a = arena.getBoundingClientRect();
+  const bw = noBtn.offsetWidth;
+  const bh = noBtn.offsetHeight;
+
+  const x = Math.random() * (a.width - bw - PADDING*2) + PADDING;
+  const y = Math.random() * (a.height - bh - PADDING*2) + PADDING;
+
+  noBtn.style.left = x + "px";
+  noBtn.style.top  = y + "px";
+}
+
+function evade(mx, my) {
+  const a = arena.getBoundingClientRect();
+  const b = noBtn.getBoundingClientRect();
+
+  const bx = (b.left - a.left) + b.width/2;
+  const by = (b.top  - a.top ) + b.height/2;
+
+  const dx = bx - mx, dy = by - my;
+  const dist = Math.hypot(dx,dy);
+  if(dist >= SAFE_DISTANCE) return;
+
+  const ux = (dx/(dist||1)) + (Math.random()-0.5)*0.25;
+  const uy = (dy/(dist||1)) + (Math.random()-0.5)*0.25;
+  const step = (SAFE_DISTANCE - dist) + 80;
+
+  let nl = (b.left - a.left) + ux*step;
+  let nt = (b.top  - a.top ) + uy*step;
+
+  nl = Math.max(PADDING, Math.min(a.width  - b.width  - PADDING, nl));
+  nt = Math.max(PADDING, Math.min(a.height - b.height - PADDING, nt));
+
+  noBtn.style.left = nl + "px";
+  noBtn.style.top  = nt + "px";
+}
+
+window.addEventListener("load", placeNoRandom);
+window.addEventListener("resize", placeNoRandom);
+
+arena.addEventListener("mousemove", e=>{
+  const r = arena.getBoundingClientRect();
+  evade(e.clientX - r.left, e.clientY - r.top);
+});
+arena.addEventListener("touchstart", e=>{
+  const t = e.touches[0];
+  const r = arena.getBoundingClientRect();
+  evade(t.clientX - r.left, t.clientY - r.top);
+},{passive:true});
+
+/* Confetti hearts */
+function spawnHearts(count=28){
+  for(let i=0;i<count;i++){
+    const h = document.createElement("div");
+    h.className = "heart";
+    h.textContent = Math.random()<.5 ? "💖" : "💘";
+    h.style.left = (Math.random()*100) + "%";
+    h.style.bottom = "-20px";
+    const dur = 3 + Math.random()*2.2;
+    h.style.animationDuration = dur + "s";
+    h.style.fontSize = (14 + Math.random()*22) + "px";
+    hearts.appendChild(h);
+    setTimeout(()=>h.remove(), dur*1000);
+  }
+}
+
+/* Fireworks */
+const fx = document.getElementById("fx");
+const ctx = fx.getContext("2d");
+let particles = [];
+let fireworksRunning = false;
+let stopAt = 0;
+
+function resizeCanvas(){
+  const r = arena.getBoundingClientRect();
+  fx.width = Math.floor(r.width * devicePixelRatio);
+  fx.height = Math.floor(r.height * devicePixelRatio);
+  fx.style.width = r.width + "px";
+  fx.style.height = r.height + "px";
+  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+}
+window.addEventListener("resize", resizeCanvas);
+
+function boom(x,y){
+  const n = 70 + Math.floor(Math.random()*40);
+  for(let i=0;i<n;i++){
+    const a = Math.random()*Math.PI*2;
+    const sp = 2 + Math.random()*4.8;
+    particles.push({
+      x,y,
+      vx: Math.cos(a)*sp,
+      vy: Math.sin(a)*sp,
+      life: 60 + Math.floor(Math.random()*35),
+      age: 0,
+      c: `hsl(${Math.floor(Math.random()*360)}, 90%, 60%)`
     });
+  }
+}
 
-    yesBtn.addEventListener('click', async () => {
-      await ensurePlaying();
+function tick(){
+  if(!fireworksRunning) return;
 
-      question.classList.add('fade-out');
-      setTimeout(() => {
-        question.style.display = 'none';
-        response.style.display = 'block';
-        response.classList.add('fade-in');
-        gifWrap.classList.add('show');
-        spawnHearts(18);
-      }, 350);
-    });
+  const w = arena.getBoundingClientRect().width;
+  const h = arena.getBoundingClientRect().height;
+  ctx.clearRect(0,0,w,h);
 
-    // "No" runs away
-    const moveNoButton = () => {
-      const padding = 16;
-      const vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-      const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-      const rect = noBtn.getBoundingClientRect();
+  if(Date.now() < stopAt && Math.random() < 0.10){
+    boom(40 + Math.random()*(w-80), 40 + Math.random()*(h-120));
+  }
 
-      const maxX = Math.max(padding, vw - rect.width - padding);
-      const maxY = Math.max(padding, vh - rect.height - padding);
+  particles = particles.filter(p => p.age < p.life);
 
-      const x = Math.floor(Math.random() * (maxX - padding + 1)) + padding;
-      const y = Math.floor(Math.random() * (maxY - padding + 1)) + padding;
+  for(const p of particles){
+    p.age++;
+    p.vy += 0.05;
+    p.x += p.vx;
+    p.y += p.vy;
 
-      noBtn.style.position = 'fixed';
-      noBtn.style.left = x + 'px';
-      noBtn.style.top = y + 'px';
-    };
+    const alpha = 1 - (p.age / p.life);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = p.c;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 2.3, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
 
-    noBtn.addEventListener('mouseenter', moveNoButton);
-    noBtn.addEventListener('click', moveNoButton);
+  if(Date.now() >= stopAt && particles.length === 0){
+    fireworksRunning = false;
+    fx.style.display = "none";
+    return;
+  }
+  requestAnimationFrame(tick);
+}
 
-    // Hearts animation
-    function spawnHearts(count) {
-      for (let i = 0; i < count; i++) {
-        const heart = document.createElement('div');
-        heart.className = 'heart';
-        heart.textContent = '❤';
+function startFireworks(durationMs=3600){
+  resizeCanvas();
+  fx.style.display = "block";
+  fireworksRunning = true;
+  stopAt = Date.now() + durationMs;
 
-        const x = Math.random() * 100;
-        const size = 12 + Math.random() * 26;
-        const duration = 3.5 + Math.random() * 3.5;
-        const delay = Math.random() * 0.8;
+  const w = arena.getBoundingClientRect().width;
+  const h = arena.getBoundingClientRect().height;
 
-        heart.style.left = x + 'vw';
-        heart.style.fontSize = size + 'px';
-        heart.style.animationDuration = duration + 's';
-        heart.style.animationDelay = delay + 's';
-        heart.style.opacity = (0.35 + Math.random() * 0.5).toFixed(2);
+  boom(w*0.25, h*0.45);
+  boom(w*0.55, h*0.35);
+  boom(w*0.75, h*0.50);
 
-        bgHearts.appendChild(heart);
-        heart.addEventListener('animationend', () => heart.remove());
-      }
-    }
+  requestAnimationFrame(tick);
+}
 
-    spawnHearts(10);
-    setInterval(() => spawnHearts(6), 1600);
+/* YES click */
+yesBtn.addEventListener("click", ()=>{
+  ensureMusicPlaying();
 
-    // initial UI state
-    setPlayingUI(!music.paused);
-  })();
-  </script>
+  yesBtn.classList.add("clicked");
+  setTimeout(() => { yesBtn.style.animation = "none"; }, 560);
+
+  spawnHearts(36);
+  startFireworks(3600);
+
+  question.style.display = "none";
+  result.style.display = "block";
+  requestAnimationFrame(() => result.classList.add("show"));
+});
+
+/* Replay */
+replayBtn.addEventListener("click", ()=>{
+  result.classList.remove("show");
+  setTimeout(() => {
+    result.style.display = "none";
+    question.style.display = "block";
+
+    yesBtn.classList.remove("clicked");
+    yesBtn.style.animation = "";
+    yesBtn.style.animation = "pulse 1.2s infinite";
+
+    placeNoRandom();
+  }, 250);
+});
+</script>
 </body>
 </html>
